@@ -1,1 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PFAS Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      margin: 2rem;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+    label { display: block; margin-top: 1rem; }
+    .row { display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    .unit-toggle { display: flex; gap: 0.5rem; }
+    input {
+      padding: 0.5rem;
+      width: 120px;
+      font-size: 1rem;
+    }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      opacity: 1;
+      -webkit-appearance: auto;
+      margin: 0;
+    }
+    .unit-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #eee;
+    }
+    .unit-btn.active {
+      background: #ffd700;
+      border-color: #999;
+    }
+    button {
+      background: #ffcc00;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .muted { color: #666; }
+    .output { margin-top: 1.5rem; }
+    .ticker {
+      overflow: hidden;
+      white-space: nowrap;
+      border-top: 1px solid #eee;
+      border-bottom: 1px solid #eee;
+      padding: 6px 0;
+      margin: 8px 0 24px;
+      position: relative;
+    }
+    .ticker-text {
+      display: inline-block;
+      padding-left: 100%;
+      animation: scroll 40s linear infinite;
+    }
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+    .ticker a {
+      text-decoration: none;
+      color: #0055cc;
+      font-weight: bold;
+      margin-right: 3rem;
+    }
+    .scrollbox {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      height: 300px;
+      overflow-y: auto;
+      background: #f9f9f9;
+      white-space: pre-wrap;
+      font-size: 0.95rem;
+    }
+    h2 {
+      margin-top: 2rem;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>PFAS Calculator</h1>
 
+  <div class="ticker">
+    <div class="ticker-text" id="ticker-text">
+      <a href="https://www.facebook.com/WaterAwarenessJersey/" target="_blank">Jersey PFAS levels reach 51 ng/L — well above EFSA's safe threshold.</a>
+      <a href="https://www.facebook.com/WaterAwarenessJersey/" target="_blank">UK limit is 100 ng/L — EFSA allows 4.4 ng/kg/week in total intake.</a>
+      <a href="https://www.facebook.com/WaterAwarenessJersey/" target="_blank">Water Awareness Jersey calls for testing and transparency.</a>
+      <a href="https://www.facebook.com/WaterAwarenessJersey/" target="_blank">PFAS is in global rainfall — yet public health remains silent.</a>
+    </div>
+  </div>
+
+  <label>Body weight</label>
+  <div class="row">
+    <input id="w" type="number" step="0.1" value="70">
+    <div class="unit-toggle">
+      <span id="kgBtn" class="unit-btn active">kg</span>
+      <span id="lbBtn" class="unit-btn">lbs</span>
+    </div>
+  </div>
+
+  <label>Age group</label>
+  <div class="unit-toggle">
+    <span id="adultBtn" class="unit-btn active">Adult</span>
+    <span id="childBtn" class="unit-btn">Child</span>
+  </div>
+
+  <label>PFAS in water (ng/L)</label>
+  <input id="c" type="number" step="0.1" value="51">
+
+  <div class="output">
+    <div id="result"></div>
+    <small id="explain" class="muted"></small>
+  </div>
+
+  <p>
+    <button onclick="window.open('https://ko-fi.com/pfasapp','_blank')">❤️ Support us</button>
+  </p>
+
+  <h2>About this App</h2>
+  <div class="scrollbox">
+This app shows that when PFAS is present in your drinking water, the dose you get simply by drinking enough to stay alive, can exceed your immune-safe limit — even before eating any food. Based upon the logic of a weekly dietary maximum tolerable intake, before you exceed the safe weekly limit, set out by the European Food Safety Authority. It uses the EFSA scientific safety standard: 4.4 ng per kg body weight per week. No spin. Just maths.
+
+PFAS are industrial chemicals that accumulate in your blood for years. Once inside you, they stay. EFSA examined animal studies, human biomonitoring, and vaccine-response data in children. Their scientists found one critical effect: children exposed to higher PFAS had weaker antibody responses to vaccines. They traced this back using PBPK modelling and set a strict weekly limit — the Tolerable Weekly Intake (TWI). This limit is the scientific safe-dose.
+
+• EFSA TWI: 4.4 nanograms per kilogram of body weight per week
+• Based on immune suppression in children
+
+Everything in this app is built on that number.
+
+What this calculator does:
+1. Takes your body weight
+2. Calculates your weekly PFAS “budget” using EFSA’s formula
+3. Uses your water’s PFAS level
+4. Shows how much water you can drink before you exceed that dose
+
+The logic is simple:
+• If you exceed the EFSA limit, your immune system is under strain
+• If you do that every week, PFAS builds up in your blood
+• If you do that for years, you’re at chronic risk
+
+This app exposes that risk with clarity.
+
+No distractions. No spin. Just the numbers.
+
+Let them speak.
+  </div>
+
+<script>
+const TWI = 4.4;
+const LBS_TO_KG = 0.45359237;
+let unit = "kg";
+let ageGroup = "adult";
+
+function updateUnits(newUnit) {
+  unit = newUnit;
+  document.getElementById("kgBtn").classList.toggle("active", unit === "kg");
+  document.getElementById("lbBtn").classList.toggle("active", unit === "lb");
+  calc();
+}
+
+document.getElementById("adultBtn").addEventListener("click", () => {
+  ageGroup = "adult";
+  document.getElementById("adultBtn").classList.add("active");
+  document.getElementById("childBtn").classList.remove("active");
+  calc();
+});
+
+document.getElementById("childBtn").addEventListener("click", () => {
+  ageGroup = "child";
+  document.getElementById("childBtn").classList.add("active");
+  document.getElementById("adultBtn").classList.remove("active");
+  calc();
+});
+
+function calc() {
+  let w = parseFloat(document.getElementById("w").value) || 0;
+  if (unit === "lb") w *= LBS_TO_KG;
+  const c = parseFloat(document.getElementById("c").value) || 0;
+  if (!w || !c) {
+    document.getElementById("result").textContent = "";
+    document.getElementById("explain").textContent = "";
+    return;
+  }
+
+  const hydrationNeed = w * (ageGroup === "child" ? 0.035 : 0.03);
+  const safeDose = (TWI * w) / 7;
+  const safeLitres = safeDose / c;
+  const shortfall = hydrationNeed - safeLitres;
+  const percentShort = hydrationNeed ? Math.round(100 * shortfall / hydrationNeed) : 0;
+  const percentOver = hydrationNeed ? Math.round((hydrationNeed * c) / safeDose * 100) : 0;
+
+  const html = `
+    Results for ${ageGroup === "child" ? "child" : "adult"} (${w.toFixed(0)} kg, PFAS: ${c} ng/L):<br><br>
+    ✅ <strong>EFSA safe PFAS dose:</strong> ${safeDose.toFixed(2)} ng/day<br><br>
+    ⚠️ <strong>Safe to drink:</strong> ${safeLitres.toFixed(2)} L/day<br><br>
+    💧 <strong>Healthy hydration need:</strong> ${hydrationNeed.toFixed(2)} L/day<br><br>
+    📉 <strong>Shortfall:</strong> ${shortfall.toFixed(2)} L/day (${percentShort}% less than needed)<br><br>
+    🚨 <strong>If you drink enough to stay hydrated:</strong> ${percentOver}% over the EFSA immune-safe limit
+  `;
+
+  document.getElementById("result").innerHTML = html.trim();
+  document.getElementById("explain").textContent = "";
+}
+
+document.getElementById("w").addEventListener("input", calc);
+document.getElementById("c").addEventListener("input", calc);
+document.getElementById("kgBtn").addEventListener("click", () => updateUnits("kg"));
+document.getElementById("lbBtn").addEventListener("click", () => updateUnits("lb"));
+
+calc();
+</script>
+
+<p style="text-align:center; margin-top:2rem;">
+  <a href="docs/disclaimer.html" style="color:#666; font-size:0.85rem;">Medical disclaimer</a><br>
+  <a href="mailto:waterawarenessjersey@gmail.com" style="color:#666; font-size:0.85rem;">Contact: waterawarenessjersey@gmail.com</a><br>
+  <a href="https://www.facebook.com/waterawarenessjersey" style="color:#666; font-size:0.85rem;" target="_blank">Facebook: Water Awareness Jersey</a>
+</p>
+
+<p style="font-size:0.85rem; color:#666; margin-top:1rem;">
+  <strong>Note:</strong> This app uses ng/L (nanograms per litre), the standard unit in Europe. In the USA, this is often referred to as ppt (parts per trillion). 1 ng/L = 1 ppt.
+</p>
+
+</body>
+</html>
